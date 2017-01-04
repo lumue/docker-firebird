@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-docker push lumue/gf4
+docker push lumue/firebird

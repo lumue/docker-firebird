@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
-docker build -t lumue/gf4 .
+docker build -t lumue/firebird .
 
