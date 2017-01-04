@@ -1,16 +1,33 @@
-FROM anapsix/alpine-java:8_server-jre
+FROM alpine:3.4
 MAINTAINER Lutz Mueller <mueller.lutz@gmail.com>
 
-ENV         GLASSFISH_HOME  /usr/local/glassfish4
-ENV         PATH                $PATH:$JAVA_HOME/bin:$GLASSFISH_HOME/bin
+#build firebird 2.5 from sources on alpine. instructions copied from https://gist.github.com/usmansaleem/1cb81d366fd721bd09b85579dc37aacf
 
-RUN         wget -O /tmp/glassfish-4.1.1.zip http://download.java.net/glassfish/4.1.1/release/glassfish-4.1.1.zip && \
-            unzip /tmp/glassfish-4.1.1.zip -d /usr/local && \
-            rm -f /tmp/glassfish-4.1.1.zip && \
-            mkdir /webapp
+ENV         FIREBIRD_HOME  /usr/local/firebird
+ENV         PATH           $PATH:$FIREBIRD_HOME/bin
+ENV         PREFIX         $FIREBIRD_HOME
+RUN         apk update && \
+            apk add --no-cache --virtual=build-dependencies build-base ncurses-dev icu-dev tar ca-certificates curl && \
+            update-ca-certificates && \
+            mkdir /work && cd /work && \
+            curl -L -o firebird-source.tar.bz2 http://downloads.sourceforge.net/project/firebird/firebird/2.5.4-Release/Firebird-2.5.4.26856-0.tar.bz2 && \
+            tar --strip=1 -xf firebird-source.tar.bz2 && \
+            sed -i '194s/.*/#if 0/'  src/common/classes/rwlock.h && \
+            sed -i '35s/.*/ /'  src/jrd/perf.h && \
+            ./configure --enable-superserver \
+                    --prefix=${PREFIX} --with-fbbin=${PREFIX}/bin --with-fbsbin=${PREFIX}/bin --with-fblib=${PREFIX}/lib \
+                    --with-fbinclude=${PREFIX}/include --with-fbdoc=${PREFIX}/doc --with-fbudf=${PREFIX}/UDF \
+                    --with-fbintl=${PREFIX}/intl --with-fbmisc=${PREFIX}/misc --with-fbplugins=${PREFIX} \
+                    --with-fblog=/var/firebird/log --with-fbglock=/var/firebird/run \
+                    --with-fbconf=/var/firebird/etc --with-fbmsg=${PREFIX} \
+                    --with-fbsecure-db=/var/firebird/system --with-system-icu  && \
+            make && \
+            make silent_install && \
+            make clean && \
+            apk del build-dependencies
 
-EXPOSE      8080 4848 8181 9009
+EXPOSE      3050
 
-WORKDIR     /usr/local/glassfish4
+WORKDIR     /usr/local/firebird
 
-CMD asadmin start-domain --verbose
+CMD fbguard -daemon -forever
