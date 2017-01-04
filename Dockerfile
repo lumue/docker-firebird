@@ -16,7 +16,7 @@ RUN         apk update && \
             sed -i '35s/.*/ /'  src/jrd/perf.h && \
             ./configure --enable-superserver \
                     --prefix=${PREFIX} --with-fbbin=${PREFIX}/bin --with-fbsbin=${PREFIX}/bin --with-fblib=${PREFIX}/lib \
-                    --with-fbinclude=${PREFIX}/include --with-fbdoc=${PREFIX}/doc --with-fbudf=${PREFIX}/UDF \
+                    --with-fbudf=${PREFIX}/UDF \
                     --with-fbintl=${PREFIX}/intl --with-fbmisc=${PREFIX}/misc --with-fbplugins=${PREFIX} \
                     --with-fblog=/var/firebird/log --with-fbglock=/var/firebird/run \
                     --with-fbconf=/var/firebird/etc --with-fbmsg=${PREFIX} \
@@ -24,8 +24,8 @@ RUN         apk update && \
             make && \
             make silent_install && \
             make clean && \
-            apk del build-dependencies
-
+            apk del curl ca-certificates tar icu-dev ncurses-dev build-base build-dependencies && \
+            rm -rf /tmp/* /var/cache/apk/* /work
 EXPOSE      3050
 
 WORKDIR     /usr/local/firebird
